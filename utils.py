@@ -14,7 +14,6 @@ def load_real_ohlc(file):
     return df
 
 def disparity_index_optimized(df, short=9, long=20, lower_thresh=-3, upper_thresh=4):
-    df = df.copy()
     df["EMA_short"] = df["close"].ewm(span=short, adjust=False).mean()
     df["EMA_long"] = df["close"].ewm(span=long, adjust=False).mean()
     df["Disparity"] = ((df["close"] - df["EMA_long"]) / df["EMA_long"]) * 100
@@ -31,8 +30,7 @@ def auto_trade_executor(df, symbol="BANKNIFTY", lot_size=15):
     entry_time = None
     cumulative_pnl = 0
 
-    for i in range(len(df)):
-        row = df.iloc[i]
+    for _, row in df.iterrows():
         signal = row["Signal"]
         price = row["Price"]
         time = row["timestamp"]
@@ -67,7 +65,7 @@ def auto_trade_executor(df, symbol="BANKNIFTY", lot_size=15):
 def monthly_pnl_summary(paired_df):
     df = paired_df.copy()
     df["Month"] = df["Exit Time"].dt.to_period("M").astype(str)
-    all_months = pd.period_range(start=df["Exit Time"].min(), end=df["Exit Time"].max(), freq="M").astype(str)
+    all_months = pd.period_range(end=pd.Timestamp.now(), periods=12, freq="M").astype(str)
     base = pd.DataFrame({"Month": all_months})
 
     summary = df.groupby("Month").agg(
@@ -78,6 +76,23 @@ def monthly_pnl_summary(paired_df):
     ).reset_index()
 
     full_summary = base.merge(summary, on="Month", how="left").fillna(0)
+    full_summary["Total_Trades"] = full_summary["Total_Trades"].astype(int)
+    return full_summary
+
+def daily_pnl_summary(paired_df):
+    df = paired_df.copy()
+    df["Day"] = df["Exit Time"].dt.date
+    all_days = pd.date_range(end=pd.Timestamp.now(), periods=30).date
+    base = pd.DataFrame({"Day": all_days})
+
+    summary = df.groupby("Day").agg(
+        Total_Trades=("PnL per lot", "count"),
+        Total_Profit=("PnL per lot", lambda x: x[x > 0].sum()),
+        Total_Loss=("PnL per lot", lambda x: x[x < 0].sum()),
+        Net_PnL=("PnL per lot", "sum")
+    ).reset_index()
+
+    full_summary = base.merge(summary, on="Day", how="left").fillna(0)
     full_summary["Total_Trades"] = full_summary["Total_Trades"].astype(int)
     return full_summary
 
