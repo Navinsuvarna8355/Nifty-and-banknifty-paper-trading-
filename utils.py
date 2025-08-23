@@ -1,16 +1,23 @@
 import pandas as pd
+import datetime
 
-def load_real_ohlc(file):
-    df = pd.read_csv(file, parse_dates=["Date"])
-    df = df.rename(columns={
-        "Date": "timestamp",
-        "Open": "open",
-        "High": "high",
-        "Low": "low",
-        "Close": "close"
+def fetch_live_ohlc(symbol):
+    # Placeholder: Replace with Groww or SmartAPI fetcher
+    # Simulate 100 candles of synthetic OHLC for now
+    import numpy as np
+    rng = pd.date_range(end=datetime.datetime.now(), periods=100, freq="5min")
+    open_prices = np.random.uniform(19000, 20000, size=100)
+    close_prices = open_prices + np.random.uniform(-50, 50, size=100)
+    high_prices = np.maximum(open_prices, close_prices) + np.random.uniform(5, 20, size=100)
+    low_prices = np.minimum(open_prices, close_prices) - np.random.uniform(5, 20, size=100)
+
+    df = pd.DataFrame({
+        "timestamp": rng,
+        "open": open_prices,
+        "high": high_prices,
+        "low": low_prices,
+        "close": close_prices
     })
-    df = df[["timestamp", "open", "high", "low", "close"]]
-    df = df.sort_values("timestamp").reset_index(drop=True)
     return df
 
 def disparity_index_optimized(df, short=9, long=20, lower_thresh=-3, upper_thresh=4):
@@ -23,7 +30,13 @@ def disparity_index_optimized(df, short=9, long=20, lower_thresh=-3, upper_thres
     df["Price"] = df["close"].round(2)
     return df
 
-def auto_trade_executor(df, symbol="BANKNIFTY", lot_size=15):
+def auto_trade_executor(df, symbol):
+    lot_sizes = {
+        "NIFTY": 75,
+        "BANKNIFTY": 30
+    }
+    lot_size = lot_sizes.get(symbol, 1)
+
     trades = []
     position = None
     entry_price = None
@@ -53,7 +66,8 @@ def auto_trade_executor(df, symbol="BANKNIFTY", lot_size=15):
                 "Exit Time": exit_time,
                 "Exit Price": exit_price,
                 "PnL per lot": pnl,
-                "Cumulative PnL": cumulative_pnl
+                "Cumulative PnL": cumulative_pnl,
+                "Lot Size": lot_size
             })
 
             position = None
