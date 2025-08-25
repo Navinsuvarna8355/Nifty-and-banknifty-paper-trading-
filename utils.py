@@ -115,4 +115,7 @@ def reasoning_panel(df):
     latest = df.iloc[-1]
     return {
         "Disparity": round(latest["Disparity"], 2),
-        "EMA_short": round(latest["
+        "EMA_short": round(latest["EMA_short"], 2),
+        "EMA_long": round(latest["EMA_long"], 2),
+        "Signal": latest["Signal"]
+    }
