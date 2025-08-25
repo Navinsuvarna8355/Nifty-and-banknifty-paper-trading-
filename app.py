@@ -56,6 +56,6 @@ if is_weekday and is_market_hours and paper_trading:
         st.download_button(f"Download {symbol} Daily PnL", daily_df.to_csv(index=False).encode("utf-8"), f"{symbol}_daily_pnl.csv", "text/csv")
 
     st.subheader("🧠 Reasoning Panel")
-    st.json(reasoning_panel(results["NIFTY"]["signals"]))  # Show NIFTY's latest signal
+    st.json(reasoning_panel(results["NIFTY"]["signals"]))
 else:
     st.warning("⛔ Trades paused: Either market is closed or toggle is OFF.")
